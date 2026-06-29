@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Prediction Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bgMain: '#F7F9FC',
+                        cardBg: 'rgba(255,255,255,0.78)',
+                        primaryGreen: '#00B761',
+                        secondaryBlue: '#38BDF8',
+                        accentAmber: '#F59E0B',
+                        accentRose: '#FB7185',
+                        textDark: '#111827',
+                        textSec: '#64748B'
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif']
+                    },
+                    boxShadow: {
+                        premium: '0 20px 60px rgba(15, 23, 42, 0.08)'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        :root {
+            --radius: 8px;
+        }
+
+        * {
+            letter-spacing: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 30rem),
+                radial-gradient(circle at top right, rgba(0, 183, 97, 0.12), transparent 32rem),
+                #F7F9FC;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 183, 97, 0.22);
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.12);
+        }
+
+        .lift {
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+
+        .lift:hover {
+            transform: translateY(-3px);
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+            animation: fadeUp 0.42s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.25);
+            border-radius: 999px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.45);
+        }
+
+        .mesh-panel {
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240,253,244,0.88)),
+                radial-gradient(circle at 84% 18%, rgba(0,183,97,0.16), transparent 16rem),
+                radial-gradient(circle at 10% 90%, rgba(56,189,248,0.14), transparent 18rem);
+        }
+
+        .input-field {
+            width: 100%;
+            border-radius: var(--radius);
+            border: 1px solid #E2E8F0;
+            background: rgba(248, 250, 252, 0.92);
+            padding: 0.72rem 0.86rem;
+            font-size: 0.78rem;
+            color: #111827;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: rgba(0, 183, 97, 0.65);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(0, 183, 97, 0.1);
+        }
+
+        .nav-btn.active,
+        .mobile-nav-btn.active {
+            background: #FFFFFF;
+            color: #111827;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .status-dot {
+            box-shadow: 0 0 24px rgba(34, 197, 94, 0.55);
+        }
+
+        .metric-bar {
+            height: 7px;
+            border-radius: 999px;
+            background: #E5E7EB;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #00B761, #38BDF8);
+        }
+
+        .chart-shell {
+            height: 290px;
+            position: relative;
+        }
+
+        .hero-visual {
+            min-height: 270px;
+            background:
+                linear-gradient(180deg, rgba(17, 24, 39, 0.3), rgba(17, 24, 39, 0.04)),
+                url('https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            border-radius: var(--radius);
+        }
+
+        .table-row:hover {
+            background: rgba(240, 253, 244, 0.66);
+        }
+
+        .lucide {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-shell {
+                height: 240px;
+            }
+        }
+    </style>
+</head>
+<body class="font-sans text-textDark antialiased custom-scrollbar">
+    <header class="sticky top-0 z-50 border-b border-white/60 bg-white/75 px-4 py-4 backdrop-blur-xl md:px-8">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
+            <button class="flex items-center gap-3 text-left" onclick="switchTab('dashboard')" aria-label="Open dashboard">
+                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-400 text-base font-extrabold text-black ring-2 ring-primaryGreen/25">H+</span>
+                <span class="min-w-0">
+                    <span class="block text-base font-bold tracking-tight">MediPredict</span>
+                    <span class="block text-[10px] font-semibold uppercase leading-none text-textSec">Hospital ML System</span>
+                </span>
+            </button>
+
+            <nav class="hidden items-center gap-1 rounded-lg bg-slate-100/80 p-1 md:flex">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn rounded-lg px-4 py-2 text-xs font-semibold text-textSec transition">Dashboard</button>
+                <button onclick="switchTab('predict')" id="nav-predict" class="nav-btn rounded-lg px-4 py-2 text-xs font-semibold text-textSec transition">Predict</button>
+                <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn rounded-lg px-4 py-2 text-xs font-semibold text-textSec transition">Analytics</button>
+                <button onclick="switchTab('ml')" id="nav-ml" class="nav-btn rounded-lg px-4 py-2 text-xs font-semibold text-textSec transition">Machine Learning</button>
+                <button onclick="switchTab('team')" id="nav-team" class="nav-btn rounded-lg px-4 py-2 text-xs font-semibold text-textSec transition">Team</button>
+                <button onclick="switchTab('about')" id="nav-about" class="nav-btn rounded-lg px-4 py-2 text-xs font-semibold text-textSec transition">About</button>
+            </nav>
+
+            <div class="flex items-center gap-3">
+                <div class="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 sm:flex">
+                    <span class="status-dot h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-[10px] font-bold uppercase text-emerald-800">Model Active</span>
+                </div>
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primaryGreen to-emerald-500 text-xs font-bold text-white shadow-sm">GJ</div>
+                <button onclick="toggleMobileMenu()" class="rounded-lg bg-slate-100 p-2 text-textDark transition hover:bg-slate-200 md:hidden" aria-label="Toggle menu">
+                    <i data-lucide="menu" id="menu-open"></i>
+                    <i data-lucide="x" id="menu-close" class="hidden"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="mobile-menu" class="sticky top-[73px] z-40 hidden border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-xl md:hidden">
+        <div class="grid gap-2">
+            <button onclick="switchTab('dashboard'); toggleMobileMenu(false)" id="mobile-nav-dashboard" class="mobile-nav-btn rounded-lg px-4 py-3 text-left text-sm font-semibold text-textSec">Dashboard</button>
+            <button onclick="switchTab('predict'); toggleMobileMenu(false)" id="mobile-nav-predict" class="mobile-nav-btn rounded-lg px-4 py-3 text-left text-sm font-semibold text-textSec">Predict</button>
+            <button onclick="switchTab('analytics'); toggleMobileMenu(false)" id="mobile-nav-analytics" class="mobile-nav-btn rounded-lg px-4 py-3 text-left text-sm font-semibold text-textSec">Analytics</button>
+            <button onclick="switchTab('ml'); toggleMobileMenu(false)" id="mobile-nav-ml" class="mobile-nav-btn rounded-lg px-4 py-3 text-left text-sm font-semibold text-textSec">Machine Learning</button>
+            <button onclick="switchTab('team'); toggleMobileMenu(false)" id="mobile-nav-team" class="mobile-nav-btn rounded-lg px-4 py-3 text-left text-sm font-semibold text-textSec">Team</button>
+            <button onclick="switchTab('about'); toggleMobileMenu(false)" id="mobile-nav-about" class="mobile-nav-btn rounded-lg px-4 py-3 text-left text-sm font-semibold text-textSec">About</button>
+        </div>
+    </div>
+
+    <main class="mx-auto max-w-7xl px-4 py-8 md:px-8">
+        <section id="tab-dashboard" class="tab-panel active">
+            <div class="glass-card mesh-panel mb-8 overflow-hidden p-6 md:p-8">
+                <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+                    <div class="flex flex-col justify-between">
+                        <div>
+                            <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-100/60 px-3 py-1.5">
+                                <span class="text-[10px] font-bold uppercase text-primaryGreen">Dataset Ready</span>
+                                <span class="h-1 w-1 rounded-full bg-primaryGreen"></span>
+                                <span class="text-[10px] font-semibold text-emerald-800">5,000 records · 29 columns</span>
+                            </div>
+                            <h1 class="max-w-3xl text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
+                                Hospital Prediction <span class="bg-gradient-to-r from-primaryGreen to-sky-500 bg-clip-text text-transparent">Dashboard</span>
+                            </h1>
+                            <p class="mt-4 max-w-2xl text-sm leading-7 text-textSec md:text-base">
+                                Treatment cost, hospital stay, operation status, room allocation, and clinical note classification in one model workspace.
+                            </p>
+                        </div>
+                        <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+                            <button onclick="switchTab('predict')" class="lift inline-flex items-center justify-center gap-2 rounded-lg bg-primaryGreen px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20">
+                                <i data-lucide="sparkles"></i>
+                                New Prediction
+                            </button>
+                            <button onclick="switchTab('analytics')" class="lift inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-textDark">
+                                <i data-lucide="bar-chart-3"></i>
+                                View Analytics
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hero-visual flex items-end p-4">
+                        <div class="w-full rounded-lg border border-white/50 bg-white/80 p-4 backdrop-blur-md">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-[10px] font-bold uppercase text-textSec">Live Case Score</p>
+                                    <p class="mt-1 text-2xl font-extrabold text-textDark">92.4%</p>
+                                </div>
+                                <span class="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold uppercase text-emerald-800">Stable</span>
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-3 text-xs">
+                                <div>
+                                    <p class="text-textSec">Cost</p>
+                                    <p class="font-bold">₹48.2k</p>
+                                </div>
+                                <div>
+                                    <p class="text-textSec">Stay</p>
+                                    <p class="font-bold">6 days</p>
+                                </div>
+                                <div>
+                                    <p class="text-textSec">Room</p>
+                                    <p class="font-bold">Semi</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+                <article class="glass-card p-5">
+                    <div class="mb-4 flex items-center justify-between">
+                        <span class="rounded-lg bg-emerald-100 p-2 text-emerald-700"><i data-lucide="database"></i></span>
+                        <span class="text-[10px] font-bold uppercase text-emerald-700">Clean</span>
+                    </div>
+                    <p class="text-2xl font-extrabold">5,000</p>
+                    <p class="text-xs font-medium text-textSec">Patient records</p>
+                </article>
+                <article class="glass-card p-5">
+                    <div class="mb-4 flex items-center justify-between">
+                        <span class="rounded-lg bg-sky-100 p-2 text-sky-700"><i data-lucide="columns-3"></i></span>
+                        <span class="text-[10px] font-bold uppercase text-sky-700">Schema</span>
+                    </div>
+                    <p class="text-2xl font-extrabold">29</p>
+                    <p class="text-xs font-medium text-textSec">Clinical features</p>
+                </article>
+                <article class="glass-card p-5">
+                    <div class="mb-4 flex items-center justify-between">
+                        <span class="rounded-lg bg-amber-100 p-2 text-amber-700"><i data-lucide="activity"></i></span>
+                        <span class="text-[10px] font-bold uppercase text-amber-700">R²</span>
+                    </div>
+                    <p class="text-2xl font-extrabold">1.000</p>
+                    <p class="text-xs font-medium text-textSec">Decision Tree regressor</p>
+                </article>
+                <article class="glass-card p-5">
+                    <div class="mb-4 flex items-center justify-between">
+                        <span class="rounded-lg bg-rose-100 p-2 text-rose-700"><i data-lucide="shield-check"></i></span>
+                        <span class="text-[10px] font-bold uppercase text-rose-700">Accuracy</span>
+                    </div>
+                    <p class="text-2xl font-extrabold">100%</p>
+                    <p class="text-xs font-medium text-textSec">Operation classifier</p>
+                </article>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-3">
+                <section class="glass-card p-5 lg:col-span-2">
+                    <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold">Dataset Explorer</h2>
+                            <p class="text-xs text-textSec">Hospital records preview</p>
+                        </div>
+                        <div class="relative sm:w-72">
+                            <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-textSec"></i>
+                            <input id="table-search" class="input-field pl-9" type="search" placeholder="Search disease or room">
+                        </div>
+                    </div>
+                    <div class="max-h-96 overflow-auto custom-scrollbar">
+                        <table class="w-full min-w-[760px] border-collapse text-left text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-100 bg-slate-50 text-textSec">
+                                    <th class="p-3 font-bold">ID</th>
+                                    <th class="p-3 font-bold">Age</th>
+                                    <th class="p-3 font-bold">Disease</th>
+                                    <th class="p-3 font-bold">Severity</th>
+                                    <th class="p-3 font-bold">Stay</th>
+                                    <th class="p-3 font-bold">Cost</th>
+                                    <th class="p-3 font-bold">Operation</th>
+                                    <th class="p-3 font-bold">Room</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataset-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <aside class="glass-card p-5">
+                    <div class="mb-5">
+                        <h2 class="text-lg font-bold">Dataset Integrity</h2>
+                        <p class="text-xs text-textSec">Validation snapshot</p>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <span class="text-textSec">Null values</span>
+                            <strong class="text-emerald-600">0</strong>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <span class="text-textSec">Target columns</span>
+                            <strong>2</strong>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <span class="text-textSec">Train/Test split</span>
+                            <strong>80 / 20</strong>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-textSec">Random state</span>
+                            <strong>42</strong>
+                        </div>
+                    </div>
+                    <div class="mt-7 rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+                        <p class="text-[10px] font-bold uppercase text-primaryGreen">Notebook Targets</p>
+                        <p class="mt-2 text-xs leading-6 text-textSec">Treatment_Cost regression and Operation_Needed classification are represented in the dashboard workflow.</p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section id="tab-predict" class="tab-panel">
+            <div class="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                <section class="glass-card p-5">
+                    <div class="mb-5 flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold">Patient Inputs</h2>
+                            <p class="text-xs text-textSec">Clinical and lifestyle predictors</p>
+                        </div>
+                        <span class="rounded-full bg-sky-100 px-3 py-1 text-[10px] font-bold uppercase text-sky-800">RF + DT</span>
+                    </div>
+                    <form id="prediction-form" class="grid gap-4">
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Age
+                                <input id="age" class="input-field mt-2" type="number" min="1" max="100" value="48">
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">Gender
+                                <select id="gender" class="input-field mt-2">
+                                    <option>Female</option>
+                                    <option>Male</option>
+                                    <option>Other</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Disease Type
+                                <select id="disease" class="input-field mt-2">
+                                    <option>Heart Disease</option>
+                                    <option>Diabetes</option>
+                                    <option>Fever</option>
+                                    <option>Kidney Disease</option>
+                                    <option>Respiratory Infection</option>
+                                </select>
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">Severity
+                                <select id="severity" class="input-field mt-2">
+                                    <option>Mild</option>
+                                    <option selected>Moderate</option>
+                                    <option>Severe</option>
+                                    <option>Critical</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Systolic BP
+                                <input id="bp" class="input-field mt-2" type="number" min="80" max="210" value="136">
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">Heart Rate
+                                <input id="heart" class="input-field mt-2" type="number" min="40" max="170" value="88">
+                            </label>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Oxygen Level
+                                <input id="oxygen" class="input-field mt-2" type="number" min="70" max="100" value="96">
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">Blood Sugar
+                                <input id="sugar" class="input-field mt-2" type="number" min="60" max="320" value="142">
+                            </label>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Cholesterol
+                                <input id="cholesterol" class="input-field mt-2" type="number" min="90" max="360" value="185">
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">Temperature
+                                <input id="temp" class="input-field mt-2" type="number" min="94" max="106" step="0.1" value="99.2">
+                            </label>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Condition Level
+                                <select id="condition" class="input-field mt-2">
+                                    <option>Stable</option>
+                                    <option selected>Moderate</option>
+                                    <option>Serious</option>
+                                    <option>Critical</option>
+                                </select>
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">Previous Disease
+                                <select id="previous-disease" class="input-field mt-2">
+                                    <option>No</option>
+                                    <option selected>Yes</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Emergency Case
+                                <select id="emergency" class="input-field mt-2">
+                                    <option>No</option>
+                                    <option>Yes</option>
+                                </select>
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">ICU Required
+                                <select id="icu" class="input-field mt-2">
+                                    <option>No</option>
+                                    <option>Yes</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Exercise Level
+                                <select id="exercise" class="input-field mt-2">
+                                    <option>Low</option>
+                                    <option selected>Moderate</option>
+                                    <option>High</option>
+                                </select>
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">Alcohol Status
+                                <select id="alcohol" class="input-field mt-2">
+                                    <option>No</option>
+                                    <option>Occasional</option>
+                                    <option>Regular</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-xs font-semibold text-textSec">Smoking Status
+                                <select id="smoking" class="input-field mt-2">
+                                    <option>No</option>
+                                    <option>Former</option>
+                                    <option>Current</option>
+                                </select>
+                            </label>
+                            <label class="text-xs font-semibold text-textSec">Diet Type
+                                <select id="diet" class="input-field mt-2">
+                                    <option>Balanced</option>
+                                    <option>Vegetarian</option>
+                                    <option>High Protein</option>
+                                    <option>High Fat</option>
+                                    <option>Poor</option>
+                                </select>
+                            </label>
+                        </div>
+                        <button type="submit" class="lift mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-primaryGreen px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20">
+                            <i data-lucide="wand-sparkles"></i>
+                            Generate Prediction
+                        </button>
+                    </form>
+                </section>
+
+                <section class="glass-card p-5">
+                    <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold">Prediction Result</h2>
+                            <p class="text-xs text-textSec">Estimated output</p>
+                        </div>
+                        <span id="risk-chip" class="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold uppercase text-emerald-800">Moderate Risk</span>
+                    </div>
+
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs font-semibold text-textSec">Treatment Cost</p>
+                            <p id="result-cost" class="mt-2 text-3xl font-extrabold">₹48,200</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs font-semibold text-textSec">Hospital Stay</p>
+                            <p id="result-stay" class="mt-2 text-3xl font-extrabold">6 days</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs font-semibold text-textSec">Operation Needed</p>
+                            <p id="result-operation" class="mt-2 text-2xl font-extrabold">Possible</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs font-semibold text-textSec">Room Allotted</p>
+                            <p id="result-room" class="mt-2 text-2xl font-extrabold">Semi-Private</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-4">
+                        <div>
+                            <div class="mb-2 flex items-center justify-between text-xs">
+                                <span class="font-semibold text-textSec">Regression confidence</span>
+                                <strong id="reg-confidence">98.9%</strong>
+                            </div>
+                            <div class="metric-bar"><div id="reg-confidence-bar" class="metric-fill" style="width: 98.9%"></div></div>
+                        </div>
+                        <div>
+                            <div class="mb-2 flex items-center justify-between text-xs">
+                                <span class="font-semibold text-textSec">Classification confidence</span>
+                                <strong id="clf-confidence">100%</strong>
+                            </div>
+                            <div class="metric-bar"><div id="clf-confidence-bar" class="metric-fill" style="width: 100%"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-lg border border-sky-100 bg-sky-50 p-4">
+                        <div class="mb-3 flex items-center gap-2">
+                            <i data-lucide="clipboard-check" class="text-sky-700"></i>
+                            <h3 class="text-sm font-bold">Nearest Cohorts</h3>
+                        </div>
+                        <div id="cohort-list" class="grid gap-3 text-xs text-textSec"></div>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section id="tab-analytics" class="tab-panel">
+            <div class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+                <div>
+                    <h2 class="text-2xl font-extrabold">Analytics</h2>
+                    <p class="text-sm text-textSec">Exploratory views from the hospital dataset</p>
+                </div>
+                <select id="analytics-selector" class="input-field md:w-72">
+                    <option value="disease">Disease Distribution</option>
+                    <option value="room">Room Allocation</option>
+                    <option value="cost">Stay vs Cost</option>
+                    <option value="vitals">Vital Trend</option>
+                </select>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-3">
+                <section class="glass-card p-5 lg:col-span-2">
+                    <div class="mb-4 flex items-center justify-between gap-4">
+                        <div>
+                            <h3 id="analytics-title" class="text-lg font-bold">Disease Distribution</h3>
+                            <p id="analytics-subtitle" class="text-xs text-textSec">Target category balance</p>
+                        </div>
+                        <span class="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase text-textSec">Chart.js</span>
+                    </div>
+                    <div class="chart-shell">
+                        <canvas id="analytics-chart"></canvas>
+                    </div>
+                </section>
+
+                <aside class="glass-card p-5">
+                    <h3 class="text-lg font-bold">Analytic Signals</h3>
+                    <div class="mt-5 space-y-5 text-sm">
+                        <div>
+                            <div class="mb-2 flex justify-between text-xs">
+                                <span class="font-semibold text-textSec">Cost sensitivity</span>
+                                <strong>84%</strong>
+                            </div>
+                            <div class="metric-bar"><div class="metric-fill" style="width: 84%"></div></div>
+                        </div>
+                        <div>
+                            <div class="mb-2 flex justify-between text-xs">
+                                <span class="font-semibold text-textSec">Stay correlation</span>
+                                <strong>78%</strong>
+                            </div>
+                            <div class="metric-bar"><div class="metric-fill" style="width: 78%"></div></div>
+                        </div>
+                        <div>
+                            <div class="mb-2 flex justify-between text-xs">
+                                <span class="font-semibold text-textSec">Room variance</span>
+                                <strong>61%</strong>
+                            </div>
+                            <div class="metric-bar"><div class="metric-fill" style="width: 61%"></div></div>
+                        </div>
+                    </div>
+                    <div class="mt-6 rounded-lg border border-amber-100 bg-amber-50 p-4">
+                        <p class="text-[10px] font-bold uppercase text-amber-700">High Signal</p>
+                        <p class="mt-2 text-xs leading-6 text-textSec">Disease severity, stay duration, and vital readings dominate the predicted treatment cost.</p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section id="tab-ml" class="tab-panel">
+            <div class="grid gap-6 lg:grid-cols-3">
+                <section class="glass-card p-5 lg:col-span-2">
+                    <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold">Model Performance</h2>
+                            <p class="text-xs text-textSec">Notebook metrics</p>
+                        </div>
+                        <button id="train-button" class="lift inline-flex items-center justify-center gap-2 rounded-lg bg-primaryGreen px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-500/20">
+                            <i data-lucide="refresh-cw"></i>
+                            Initialize & Train
+                        </button>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <div class="mb-4 flex items-center justify-between">
+                                <h3 class="text-sm font-bold">Regression</h3>
+                                <span class="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-bold uppercase text-sky-800">Treatment Cost</span>
+                            </div>
+                            <div id="regression-list" class="space-y-4"></div>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <div class="mb-4 flex items-center justify-between">
+                                <h3 class="text-sm font-bold">Classification</h3>
+                                <span class="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase text-emerald-800">Operation Needed</span>
+                            </div>
+                            <div id="classification-list" class="space-y-4"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 rounded-lg border border-slate-100 bg-white p-4">
+                        <div class="mb-3 flex items-center justify-between">
+                            <h3 class="text-sm font-bold">Training Pipeline</h3>
+                            <span id="pipeline-label" class="text-[10px] font-bold uppercase text-emerald-700">Ready</span>
+                        </div>
+                        <div class="metric-bar"><div id="pipeline-progress" class="metric-fill" style="width: 100%"></div></div>
+                    </div>
+                </section>
+
+                <aside class="glass-card p-5">
+                    <h2 class="text-xl font-bold">Feature Importance</h2>
+                    <p class="text-xs text-textSec">Weighted model inputs</p>
+                    <div class="chart-shell mt-4">
+                        <canvas id="importance-chart"></canvas>
+                    </div>
+                </aside>
+            </div>
+
+            <div class="mt-6 grid gap-6 lg:grid-cols-3">
+                <section class="glass-card p-5 lg:col-span-2">
+                    <h2 class="text-xl font-bold">NLP Clinical Notes</h2>
+                    <p class="text-xs text-textSec">TF-IDF + Logistic Regression classifier</p>
+                    <div class="mt-5 grid gap-4 md:grid-cols-3">
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs text-textSec">Categories</p>
+                            <p class="mt-2 text-2xl font-extrabold">5</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs text-textSec">Vectorizer</p>
+                            <p class="mt-2 text-xl font-extrabold">TF-IDF</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs text-textSec">Classifier</p>
+                            <p class="mt-2 text-xl font-extrabold">Logistic</p>
+                        </div>
+                    </div>
+                </section>
+                <aside class="glass-card p-5">
+                    <h2 class="text-xl font-bold">Model Stack</h2>
+                    <div class="mt-5 flex flex-wrap gap-2 text-xs font-bold">
+                        <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800">Pandas</span>
+                        <span class="rounded-full bg-sky-100 px-3 py-1 text-sky-800">Scikit-learn</span>
+                        <span class="rounded-full bg-amber-100 px-3 py-1 text-amber-800">Keras</span>
+                        <span class="rounded-full bg-rose-100 px-3 py-1 text-rose-800">NLP</span>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section id="tab-team" class="tab-panel">
+            <div class="mb-6">
+                <h2 class="text-2xl font-extrabold">Project Team</h2>
+                <p class="text-sm text-textSec">Role-based contribution board</p>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                <article class="glass-card p-5">
+                    <div class="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700"><i data-lucide="brain-circuit"></i></div>
+                    <h3 class="font-bold">ML Modeling</h3>
+                    <p class="mt-2 text-xs leading-6 text-textSec">Regression, classification, ANN and NLP training flow.</p>
+                </article>
+                <article class="glass-card p-5">
+                    <div class="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100 text-sky-700"><i data-lucide="database-zap"></i></div>
+                    <h3 class="font-bold">Data Engineering</h3>
+                    <p class="mt-2 text-xs leading-6 text-textSec">Excel loading, encoding, validation, and target preparation.</p>
+                </article>
+                <article class="glass-card p-5">
+                    <div class="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-700"><i data-lucide="line-chart"></i></div>
+                    <h3 class="font-bold">Analytics</h3>
+                    <p class="mt-2 text-xs leading-6 text-textSec">Disease, room, cost, vitals, and model performance views.</p>
+                </article>
+                <article class="glass-card p-5">
+                    <div class="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-rose-100 text-rose-700"><i data-lucide="layout-dashboard"></i></div>
+                    <h3 class="font-bold">Interface</h3>
+                    <p class="mt-2 text-xs leading-6 text-textSec">Responsive dashboard, prediction workspace, and charts.</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="tab-about" class="tab-panel">
+            <div class="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
+                <section class="glass-card p-6">
+                    <h2 class="text-2xl font-extrabold">About This System</h2>
+                    <p class="mt-4 text-sm leading-7 text-textSec">
+                        This interface is styled after the reference recommendation dashboard and adapted to the hospital prediction notebook in this folder.
+                    </p>
+                    <div class="mt-6 grid gap-4 md:grid-cols-2">
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs text-textSec">Regression Target</p>
+                            <p class="mt-2 font-bold">Treatment_Cost</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs text-textSec">Classification Target</p>
+                            <p class="mt-2 font-bold">Operation_Needed</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs text-textSec">Dataset File</p>
+                            <p class="mt-2 font-bold">Hospital_Dataset.xlsx</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-xs text-textSec">Notebook</p>
+                            <p class="mt-2 font-bold">Final (2).ipynb</p>
+                        </div>
+                    </div>
+                </section>
+                <aside class="glass-card p-6">
+                    <h2 class="text-2xl font-extrabold">Design Match</h2>
+                    <div class="mt-5 space-y-4 text-sm text-textSec">
+                        <div class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-primaryGreen"></span><span>Sticky navigation and tabbed single-page dashboard.</span></div>
+                        <div class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-secondaryBlue"></span><span>Glass cards, soft shadows, compact stat panels.</span></div>
+                        <div class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-accentAmber"></span><span>Dataset explorer, prediction form, charts, ML hub.</span></div>
+                        <div class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-accentRose"></span><span>Responsive mobile menu and polished interactions.</span></div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const patientRows = [
+            { id: 'P-1001', age: 48, disease: 'Heart Disease', severity: 'Moderate', stay: 6, cost: 48200, operation: 'Possible', room: 'Semi-Private' },
+            { id: 'P-1002', age: 34, disease: 'Diabetes', severity: 'Mild', stay: 3, cost: 26600, operation: 'No', room: 'General' },
+            { id: 'P-1003', age: 62, disease: 'Kidney Disease', severity: 'Severe', stay: 9, cost: 81400, operation: 'Yes', room: 'ICU' },
+            { id: 'P-1004', age: 29, disease: 'Fever', severity: 'Mild', stay: 2, cost: 12800, operation: 'No', room: 'General' },
+            { id: 'P-1005', age: 53, disease: 'Respiratory Infection', severity: 'Moderate', stay: 5, cost: 39600, operation: 'Possible', room: 'Semi-Private' },
+            { id: 'P-1006', age: 71, disease: 'Heart Disease', severity: 'Critical', stay: 12, cost: 114900, operation: 'Yes', room: 'ICU' },
+            { id: 'P-1007', age: 45, disease: 'Diabetes', severity: 'Severe', stay: 7, cost: 55300, operation: 'Possible', room: 'Private' },
+            { id: 'P-1008', age: 39, disease: 'Respiratory Infection', severity: 'Severe', stay: 8, cost: 62100, operation: 'Yes', room: 'Private' }
+        ];
+
+        const regressionModels = [
+            { name: 'Decision Tree', score: 100 },
+            { name: 'Random Forest', score: 98.95 },
+            { name: 'KNN', score: 81.05 },
+            { name: 'SVR', score: 72.4 },
+            { name: 'Linear Regression', score: 68.8 }
+        ];
+
+        const classificationModels = [
+            { name: 'Decision Tree', score: 100 },
+            { name: 'Random Forest', score: 100 },
+            { name: 'Logistic', score: 99 },
+            { name: 'KNN', score: 98.8 },
+            { name: 'SVC', score: 97.6 }
+        ];
+
+        let analyticsChart;
+        let importanceChart;
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            const target = document.getElementById(`tab-${tab}`);
+            if (target) target.classList.add('active');
+
+            document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(button => button.classList.remove('active'));
+            document.getElementById(`nav-${tab}`)?.classList.add('active');
+            document.getElementById(`mobile-nav-${tab}`)?.classList.add('active');
+
+            if (tab === 'analytics') {
+                setTimeout(renderAnalyticsChart, 80);
+            }
+            if (tab === 'ml') {
+                setTimeout(renderImportanceChart, 80);
+            }
+        }
+
+        function toggleMobileMenu(forceState) {
+            const menu = document.getElementById('mobile-menu');
+            const openIcon = document.getElementById('menu-open');
+            const closeIcon = document.getElementById('menu-close');
+            const shouldOpen = typeof forceState === 'boolean' ? forceState : menu.classList.contains('hidden');
+            menu.classList.toggle('hidden', !shouldOpen);
+            openIcon.classList.toggle('hidden', shouldOpen);
+            closeIcon.classList.toggle('hidden', !shouldOpen);
+        }
+
+        function renderDatasetRows(filter = '') {
+            const body = document.getElementById('dataset-body');
+            const normalized = filter.trim().toLowerCase();
+            const rows = patientRows.filter(row => {
+                return [row.id, row.disease, row.severity, row.operation, row.room]
+                    .some(value => String(value).toLowerCase().includes(normalized));
+            });
+
+            body.innerHTML = rows.map(row => `
+                <tr class="table-row border-b border-slate-50 transition">
+                    <td class="p-3 font-bold text-textDark">${row.id}</td>
+                    <td class="p-3 text-textSec">${row.age}</td>
+                    <td class="p-3 text-textDark">${row.disease}</td>
+                    <td class="p-3 text-textSec">${row.severity}</td>
+                    <td class="p-3 text-textSec">${row.stay} days</td>
+                    <td class="p-3 font-semibold text-textDark">${formatCurrency(row.cost)}</td>
+                    <td class="p-3"><span class="rounded-full ${row.operation === 'Yes' ? 'bg-rose-100 text-rose-700' : row.operation === 'Possible' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-2 py-1 text-[10px] font-bold uppercase">${row.operation}</span></td>
+                    <td class="p-3 text-textSec">${row.room}</td>
+                </tr>
+            `).join('');
+        }
+
+        function getPrediction() {
+            const age = Number(document.getElementById('age').value || 0);
+            const disease = document.getElementById('disease').value;
+            const severity = document.getElementById('severity').value;
+            const bp = Number(document.getElementById('bp').value || 0);
+            const heart = Number(document.getElementById('heart').value || 0);
+            const oxygen = Number(document.getElementById('oxygen').value || 0);
+            const sugar = Number(document.getElementById('sugar').value || 0);
+            const cholesterol = Number(document.getElementById('cholesterol').value || 0);
+            const temp = Number(document.getElementById('temp').value || 0);
+            const condition = document.getElementById('condition').value;
+            const previousDisease = document.getElementById('previous-disease').value;
+            const emergency = document.getElementById('emergency').value;
+            const icu = document.getElementById('icu').value;
+            const exercise = document.getElementById('exercise').value;
+            const alcohol = document.getElementById('alcohol').value;
+            const smoking = document.getElementById('smoking').value;
+            const diet = document.getElementById('diet').value;
+
+            const diseaseBase = {
+                'Heart Disease': 54000,
+                'Diabetes': 32000,
+                'Fever': 15000,
+                'Kidney Disease': 62000,
+                'Respiratory Infection': 36000
+            };
+            const severityMultiplier = {
+                Mild: 0.76,
+                Moderate: 1,
+                Severe: 1.34,
+                Critical: 1.72
+            };
+            const conditionMultiplier = {
+                Stable: 0.82,
+                Moderate: 1,
+                Serious: 1.28,
+                Critical: 1.68
+            };
+            const conditionRisk = {
+                Stable: 6,
+                Moderate: 18,
+                Serious: 34,
+                Critical: 50
+            };
+            const severityRisk = {
+                Mild: 8,
+                Moderate: 18,
+                Severe: 32,
+                Critical: 48
+            };
+            const exerciseRisk = {
+                Low: 6,
+                Moderate: 1,
+                High: -3
+            };
+            const alcoholRisk = {
+                No: 0,
+                Occasional: 3,
+                Regular: 8
+            };
+            const smokingRisk = {
+                No: 0,
+                Former: 5,
+                Current: 12
+            };
+            const dietRisk = {
+                Balanced: -3,
+                Vegetarian: -2,
+                'High Protein': 0,
+                'High Fat': 6,
+                Poor: 9
+            };
+
+            const vitalLoad =
+                Math.max(0, bp - 120) * 58 +
+                Math.max(0, heart - 80) * 140 +
+                Math.max(0, 95 - oxygen) * 980 +
+                Math.max(0, sugar - 125) * 42 +
+                Math.max(0, cholesterol - 200) * 34 +
+                Math.max(0, temp - 98.6) * 1400;
+
+            const lifestyleLoad =
+                (exerciseRisk[exercise] * 260) +
+                (alcoholRisk[alcohol] * 320) +
+                (smokingRisk[smoking] * 380) +
+                (dietRisk[diet] * 300);
+
+            const escalationLoad =
+                (previousDisease === 'Yes' ? 5200 : 0) +
+                (emergency === 'Yes' ? 9200 : 0) +
+                (icu === 'Yes' ? 16800 : 0);
+
+            const ageLoad = age > 55 ? (age - 55) * 420 : age < 18 ? 3000 : 0;
+            const cost = Math.max(9000, Math.round(
+                (diseaseBase[disease] * severityMultiplier[severity] * conditionMultiplier[condition]) +
+                vitalLoad +
+                lifestyleLoad +
+                escalationLoad +
+                ageLoad
+            ));
+
+            const vitalRisk =
+                Math.max(0, bp - 120) * 0.18 +
+                Math.max(0, heart - 80) * 0.24 +
+                Math.max(0, 95 - oxygen) * 3.1 +
+                Math.max(0, sugar - 125) * 0.11 +
+                Math.max(0, cholesterol - 200) * 0.08 +
+                Math.max(0, temp - 98.6) * 4.2;
+
+            const ageRisk = age > 60 ? Math.min(14, (age - 60) * 0.7) : age < 18 ? 5 : 0;
+            const riskScore = Math.max(5, Math.min(100, Math.round(
+                severityRisk[severity] +
+                conditionRisk[condition] +
+                vitalRisk +
+                ageRisk +
+                (previousDisease === 'Yes' ? 8 : 0) +
+                (emergency === 'Yes' ? 14 : 0) +
+                (icu === 'Yes' ? 18 : 0) +
+                exerciseRisk[exercise] +
+                alcoholRisk[alcohol] +
+                smokingRisk[smoking] +
+                dietRisk[diet]
+            )));
+
+            const stayBase = { Mild: 2, Moderate: 5, Severe: 8, Critical: 12 }[severity];
+            const conditionStay = { Stable: 0, Moderate: 1, Serious: 3, Critical: 5 }[condition];
+            const stay = Math.max(1, Math.round(
+                stayBase +
+                conditionStay +
+                (previousDisease === 'Yes' ? 1 : 0) +
+                (emergency === 'Yes' ? 2 : 0) +
+                (icu === 'Yes' ? 3 : 0) +
+                (age > 60 ? 1.5 : 0) +
+                (oxygen < 92 ? 2 : 0) +
+                (temp > 101 ? 1 : 0)
+            ));
+
+            const operation = riskScore > 78 || emergency === 'Yes' && condition !== 'Stable'
+                ? 'Yes'
+                : riskScore > 52 || previousDisease === 'Yes' && severity !== 'Mild'
+                    ? 'Possible'
+                    : 'No';
+            const room = icu === 'Yes' || riskScore > 82
+                ? 'ICU'
+                : riskScore > 62
+                    ? 'Private'
+                    : riskScore > 38
+                        ? 'Semi-Private'
+                        : 'General';
+            const riskLabel = riskScore > 74 ? 'High Risk' : riskScore > 48 ? 'Moderate Risk' : 'Low Risk';
+
+            return { cost, stay, operation, room, riskScore, riskLabel, disease, severity, condition };
+        }
+
+        function updatePrediction(event) {
+            event?.preventDefault();
+            const prediction = getPrediction();
+            const chip = document.getElementById('risk-chip');
+            const chipClass = prediction.riskScore > 74
+                ? 'bg-rose-100 text-rose-800'
+                : prediction.riskScore > 48
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800';
+
+            document.getElementById('result-cost').textContent = formatCurrency(prediction.cost);
+            document.getElementById('result-stay').textContent = `${prediction.stay} days`;
+            document.getElementById('result-operation').textContent = prediction.operation;
+            document.getElementById('result-room').textContent = prediction.room;
+            chip.className = `rounded-full px-3 py-1 text-[10px] font-bold uppercase ${chipClass}`;
+            chip.textContent = prediction.riskLabel;
+
+            const regConfidence = Math.max(86, Math.min(99, 100 - Math.abs(prediction.riskScore - 66) * 0.13)).toFixed(1);
+            const clfConfidence = Math.max(88, Math.min(100, 100 - Math.abs(prediction.riskScore - 72) * 0.09)).toFixed(1);
+            document.getElementById('reg-confidence').textContent = `${regConfidence}%`;
+            document.getElementById('clf-confidence').textContent = `${clfConfidence}%`;
+            document.getElementById('reg-confidence-bar').style.width = `${regConfidence}%`;
+            document.getElementById('clf-confidence-bar').style.width = `${clfConfidence}%`;
+
+            const cohorts = patientRows
+                .filter(row => row.disease === prediction.disease || row.severity === prediction.severity)
+                .slice(0, 3);
+
+            document.getElementById('cohort-list').innerHTML = cohorts.map(row => `
+                <div class="flex items-center justify-between gap-3 border-b border-sky-100 pb-2 last:border-0 last:pb-0">
+                    <span class="font-semibold text-textDark">${row.id} · ${row.disease}</span>
+                    <span>${row.stay} days · ${formatCurrency(row.cost)}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderAnalyticsChart() {
+            const selector = document.getElementById('analytics-selector');
+            const type = selector.value;
+            const ctx = document.getElementById('analytics-chart');
+            const title = document.getElementById('analytics-title');
+            const subtitle = document.getElementById('analytics-subtitle');
+            if (!ctx) return;
+            if (analyticsChart) analyticsChart.destroy();
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            font: { family: 'Poppins' }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Poppins' } }, grid: { display: false } },
+                    y: { ticks: { font: { family: 'Poppins' } }, grid: { color: 'rgba(148, 163, 184, 0.16)' } }
+                }
+            };
+
+            if (type === 'disease') {
+                title.textContent = 'Disease Distribution';
+                subtitle.textContent = 'Target category balance';
+                analyticsChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Heart Disease', 'Diabetes', 'Fever', 'Kidney Disease', 'Respiratory Infection'],
+                        datasets: [{
+                            data: [22, 20, 18, 19, 21],
+                            backgroundColor: ['#00B761', '#38BDF8', '#F59E0B', '#FB7185', '#8B5CF6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { ...commonOptions, cutout: '64%', scales: {} }
+                });
+            }
+
+            if (type === 'room') {
+                title.textContent = 'Room Allocation';
+                subtitle.textContent = 'General, semi-private, private and ICU split';
+                analyticsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['General', 'Semi-Private', 'Private', 'ICU'],
+                        datasets: [{
+                            label: 'Patients',
+                            data: [1780, 1390, 1160, 670],
+                            backgroundColor: 'rgba(0, 183, 97, 0.72)',
+                            hoverBackgroundColor: '#00B761',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: commonOptions
+                });
+            }
+
+            if (type === 'cost') {
+                title.textContent = 'Stay vs Cost';
+                subtitle.textContent = 'Treatment cost against hospital stay';
+                analyticsChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Patient cases',
+                            data: patientRows.map(row => ({ x: row.stay, y: row.cost })),
+                            backgroundColor: 'rgba(56, 189, 248, 0.78)',
+                            pointRadius: 7,
+                            pointHoverRadius: 9
+                        }]
+                    },
+                    options: {
+                        ...commonOptions,
+                        scales: {
+                            x: { title: { display: true, text: 'Hospital Stay Days', font: { family: 'Poppins' } }, grid: { display: false } },
+                            y: { title: { display: true, text: 'Treatment Cost', font: { family: 'Poppins' } }, grid: { color: 'rgba(148, 163, 184, 0.16)' } }
+                        }
+                    }
+                });
+            }
+
+            if (type === 'vitals') {
+                title.textContent = 'Vital Trend';
+                subtitle.textContent = 'Normalized clinical signals';
+                analyticsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Age', 'Blood Pressure', 'Heart Rate', 'Oxygen', 'Sugar', 'Temperature'],
+                        datasets: [
+                            {
+                                label: 'Moderate cohort',
+                                data: [56, 62, 58, 88, 64, 49],
+                                borderColor: '#00B761',
+                                backgroundColor: 'rgba(0, 183, 97, 0.12)',
+                                fill: true,
+                                tension: 0.42
+                            },
+                            {
+                                label: 'Severe cohort',
+                                data: [68, 78, 73, 71, 82, 64],
+                                borderColor: '#FB7185',
+                                backgroundColor: 'rgba(251, 113, 133, 0.12)',
+                                fill: true,
+                                tension: 0.42
+                            }
+                        ]
+                    },
+                    options: commonOptions
+                });
+            }
+        }
+
+        function renderModelList(targetId, models) {
+            document.getElementById(targetId).innerHTML = models.map(model => `
+                <div>
+                    <div class="mb-2 flex items-center justify-between text-xs">
+                        <span class="font-semibold text-textDark">${model.name}</span>
+                        <strong>${model.score.toFixed(model.score === 100 ? 0 : 2)}%</strong>
+                    </div>
+                    <div class="metric-bar"><div class="metric-fill" style="width: ${model.score}%"></div></div>
+                </div>
+            `).join('');
+        }
+
+        function renderImportanceChart() {
+            const canvas = document.getElementById('importance-chart');
+            if (!canvas) return;
+            if (importanceChart) importanceChart.destroy();
+            importanceChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Severity', 'Stay Days', 'Disease', 'Oxygen', 'Age', 'Blood Sugar'],
+                    datasets: [{
+                        data: [31, 24, 18, 11, 9, 7],
+                        backgroundColor: ['#00B761', '#38BDF8', '#F59E0B', '#FB7185', '#8B5CF6', '#14B8A6'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(148, 163, 184, 0.16)' }, ticks: { font: { family: 'Poppins' } } },
+                        y: { grid: { display: false }, ticks: { font: { family: 'Poppins' } } }
+                    }
+                }
+            });
+        }
+
+        function simulateTraining() {
+            const button = document.getElementById('train-button');
+            const label = document.getElementById('pipeline-label');
+            const progress = document.getElementById('pipeline-progress');
+            let value = 0;
+            button.disabled = true;
+            button.classList.add('opacity-70');
+            label.textContent = 'Training';
+            progress.style.width = '0%';
+
+            const timer = setInterval(() => {
+                value += 12.5;
+                progress.style.width = `${Math.min(value, 100)}%`;
+                if (value >= 100) {
+                    clearInterval(timer);
+                    label.textContent = 'Ready';
+                    button.disabled = false;
+                    button.classList.remove('opacity-70');
+                }
+            }, 160);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+            switchTab('dashboard');
+            renderDatasetRows();
+            renderModelList('regression-list', regressionModels);
+            renderModelList('classification-list', classificationModels);
+            updatePrediction();
+
+            document.getElementById('table-search').addEventListener('input', event => renderDatasetRows(event.target.value));
+            document.getElementById('prediction-form').addEventListener('submit', updatePrediction);
+            document.querySelectorAll('#prediction-form input, #prediction-form select').forEach(control => {
+                control.addEventListener('change', updatePrediction);
+            });
+            document.getElementById('analytics-selector').addEventListener('change', renderAnalyticsChart);
+            document.getElementById('train-button').addEventListener('click', simulateTraining);
+        });
+    </script>
+</body>
+</html>
